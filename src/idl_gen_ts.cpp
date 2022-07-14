@@ -1484,9 +1484,10 @@ class TsGenerator : public BaseGenerator {
                   GenBBAccess() + ".bytes().buffer";
           // have to make a copy for unaligned TypedArrays
           code += aligned ? ", " : ".slice(";
-          code += NumToString(field.value.offset) + ", ";
+          code += "this.bb_pos + " + NumToString(field.value.offset) + ", ";
           code += aligned ? NumToString(field.value.type.fixed_length) :
-                  NumToString(field.value.offset + field.value.type.fixed_length) + ")";
+                  "this.bb_pos + " + NumToString(field.value.offset + 
+                  SizeOf(vectorType.base_type)*field.value.type.fixed_length) + ")";
           code += ");\n";
         }
 

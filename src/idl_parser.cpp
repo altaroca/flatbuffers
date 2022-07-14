@@ -714,7 +714,8 @@ CheckedError Parser::AddField(StructDef &struct_def, const std::string &name,
   field.value.type = type;
   if (struct_def.fixed) {  // statically compute the field offset
     auto size = InlineSize(type);
-    auto alignment = InlineAlignment(type);
+    // --packed 1
+    auto alignment = static_cast<size_t>(1); //InlineAlignment(type);
     // structs_ need to have a predictable format, so we need to align to
     // the largest scalar
     struct_def.minalign = std::max(struct_def.minalign, alignment);
