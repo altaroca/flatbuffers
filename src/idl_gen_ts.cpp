@@ -523,10 +523,10 @@ class TsGenerator : public BaseGenerator {
       }
       if (IsStruct(field.value.type)) {
         if(!arraydepth) {
-        // Generate arguments for a struct inside a struct. To ensure names
-        // don't clash, and to make it obvious these arguments are constructing
-        // a nested struct, prefix the name with the field name.
-        GenStructBody(*field.value.type.struct_def, body,
+          // Generate arguments for a struct inside a struct. To ensure names
+          // don't clash, and to make it obvious these arguments are constructing
+          // a nested struct, prefix the name with the field name.
+          GenStructBody(*field.value.type.struct_def, body,
                         nameprefix + field.name + namesuffix + "_", "", arraydepth+1);
         }
         else {
@@ -550,8 +550,8 @@ class TsGenerator : public BaseGenerator {
       else {
         GenStructInstruction(field.name, field.value.type, body, nameprefix, namesuffix);
       }
-      }
     }
+  }
 
   static void GenStructInstruction(const std::string &fieldname, 
                             const Type& type,
@@ -563,7 +563,7 @@ class TsGenerator : public BaseGenerator {
     *body += nameprefix + fieldname + namesuffix;
     *body += ");\n";
   }
-
+  
   std::string GenerateNewExpression(const std::string &object_name) {
     return "new " + EscapeKeyword(object_name) + "()";
   }
@@ -1461,7 +1461,7 @@ class TsGenerator : public BaseGenerator {
           code += ";\n";
         }
       }
-
+      
       // Emit an array field
       else if (IsArray(field.value.type)) {
         // Emit a length helper
@@ -1475,14 +1475,19 @@ class TsGenerator : public BaseGenerator {
         if (IsScalar(vectorType.base_type) && !IsLong(vectorType.base_type)) {
           GenDocComment(code_ptr);
           
+          // support for --packed
+          bool aligned = !(field.value.offset % SizeOf(vectorType.base_type));
           code += "}\n\n"; // end previous method
           code += ConvertCase(field.name, Case::kLowerCamel);
           code += "Array():" + GenType(vectorType) + "Array|null {\n";
           code += "  return new " + GenType(vectorType) + "Array(" + 
-                  GenBBAccess() + ".bytes().buffer, " + 
-                  NumToString(field.value.offset) + ", " +
-                  NumToString(field.value.type.fixed_length) +
-                  ");\n";
+                  GenBBAccess() + ".bytes().buffer";
+          // have to make a copy for unaligned TypedArrays
+          code += aligned ? ", " : ".slice(";
+          code += NumToString(field.value.offset) + ", ";
+          code += aligned ? NumToString(field.value.type.fixed_length) :
+                  NumToString(field.value.offset + field.value.type.fixed_length) + ")";
+          code += ");\n";
         }
 
       }
